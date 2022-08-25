@@ -4,16 +4,16 @@ PPVC (or Python Package Version Checker) is a simple command-line utility that q
 
 ## Installation
 
-~~
+~~~bash
 pip install ppvc
-~~
+~~~
 
 ## Usage
 
 ~~~bash
 # Lists all versions
 ppvc requests
-# Shows only the package latest version
+# Shows only the latest version
 ppvc requests --latest
 ~~~
 
