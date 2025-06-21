@@ -2,6 +2,7 @@
 
 import json
 import sys
+import argparse
 from typing import List, Union
 from urllib import request
 from urllib.error import HTTPError, URLError
@@ -40,13 +41,14 @@ def get_package_versions(pkg_name: str, latest_only: bool = False) -> List[str]:
     return [versions[0]] if latest_only else versions
 
 
-def display_versions(pkg_name: str, versions: List[str]) -> None:
+def display_versions(pkg_name: str, versions: List[str], total_versions: int = None) -> None:
     """
     Display versions in a formatted table with colors.
     
     Args:
         pkg_name: Name of the package
         versions: List of version strings
+        total_versions: Total number of versions available (if limited)
     """
     console = Console()
     
@@ -56,8 +58,12 @@ def display_versions(pkg_name: str, versions: List[str]) -> None:
         console.print(f"[bold blue]{versions[0]}[/bold blue]\n")
     else:
         # Multiple versions in table
+        title = f"Available versions for [bold green]{pkg_name}[/bold green] (latest first)"
+        if total_versions and total_versions > len(versions):
+            title += f" (showing {len(versions)} of {total_versions})"
+        
         table = Table(
-            title=f"Available versions for [bold green]{pkg_name}[/bold green] (latest first)",
+            title=title,
             show_header=True,
             header_style="bold magenta"
         )
@@ -81,18 +87,52 @@ def display_versions(pkg_name: str, versions: List[str]) -> None:
 
 def main() -> None:
     """Main entry point for the command-line interface."""
-    if len(sys.argv) < 2:
-        console = Console()
-        console.print("[bold red]Error:[/bold red] Package name is required")
-        console.print("\n[bold]Usage:[/bold] ppvc <package_name> [--latest]")
-        sys.exit(1)
-        
-    pkg_name = sys.argv[1]
-    latest_only = '--latest' in sys.argv[2:]
+    parser = argparse.ArgumentParser(
+        description="Python Package Version Checker - Query PyPI for package versions",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  ppvc requests                    # List all versions of requests
+  ppvc numpy --latest             # Show only the latest version of numpy
+  ppvc django --limit 5           # Show only the 5 most recent versions
+        """
+    )
+    
+    parser.add_argument(
+        "package",
+        help="Name of the Python package to check"
+    )
+    
+    parser.add_argument(
+        "--latest",
+        action="store_true",
+        help="Show only the latest version"
+    )
+    
+    parser.add_argument(
+        "--limit",
+        type=int,
+        help="Limit the number of versions shown (default: show all)"
+    )
+    
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="ppvc 1.0.0"
+    )
+    
+    args = parser.parse_args()
     
     try:
-        versions = get_package_versions(pkg_name, latest_only)
-        display_versions(pkg_name, versions)
+        versions = get_package_versions(args.package, args.latest)
+        
+        # Apply limit if specified
+        total_versions = None
+        if args.limit and not args.latest:
+            total_versions = len(versions)
+            versions = versions[:args.limit]
+        
+        display_versions(args.package, versions, total_versions)
     except (HTTPError, URLError) as e:
         console = Console()
         console.print(f"[bold red]Error:[/bold red] {e}")
