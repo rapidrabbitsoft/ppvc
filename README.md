@@ -80,7 +80,7 @@ PPVC provides clear error messages for common issues:
 
 ## Requirements
 
-- Python 3.7 or higher
+- Python 3.8 or higher
 - Internet connection to access PyPI
 - packaging>=23.0 (for version parsing)
 - rich>=13.0.0 (for terminal formatting)
